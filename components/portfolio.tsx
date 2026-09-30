@@ -14,8 +14,11 @@ import {
   ContactRound,
   Mail,
   MapPin,
+  MessageCircle,
   Network,
   Phone,
+  Send,
+  X,
   ShieldCheck,
   Sparkles,
   Terminal,
@@ -58,6 +61,26 @@ function Reveal({ children, delay = 0, className = '' }: { children: React.React
 export function Portfolio() {
   const [repos, setRepos] = useState<Repo[]>([])
   const [openProject, setOpenProject] = useState<string | null>(null)
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [question, setQuestion] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [asking, setAsking] = useState(false)
+
+  async function askJoe(event: React.FormEvent) {
+    event.preventDefault()
+    if (!question.trim() || asking) return
+    setAsking(true)
+    setAnswer('')
+    try {
+      const response = await fetch('/api/ask-joe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: question }] }) })
+      const data = await response.json()
+      setAnswer(data.answer ?? data.error ?? 'I could not answer that from the portfolio.')
+    } catch {
+      setAnswer('The portfolio assistant is temporarily unavailable.')
+    } finally {
+      setAsking(false)
+    }
+  }
 
   useEffect(() => {
     fetch('https://api.github.com/users/JoeMacibi/repos?sort=updated&per_page=12')
@@ -72,9 +95,11 @@ export function Portfolio() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 lg:px-8">
           <a href="#top" className="font-mono text-sm font-bold tracking-tight"><span className="text-[#b7f34b]">JM</span> / engineer</a>
           <div className="hidden items-center gap-7 text-xs font-medium text-white/55 md:flex"><a href="#work" className="transition hover:text-white">work</a><a href="#experience" className="transition hover:text-white">experience</a><a href="#credentials" className="transition hover:text-white">credentials</a></div>
-          <a href="mailto:joe.macibi@gmail.com" className="flex items-center gap-2 text-xs font-semibold text-[#b7f34b] transition hover:text-white"><span className="hidden sm:inline">Let&apos;s connect</span><ArrowUpRight size={15} /></a>
+          <button type="button" onClick={() => setAssistantOpen(true)} className="flex items-center gap-2 text-xs font-semibold text-[#b7f34b] transition hover:text-white"><span className="hidden sm:inline">Ask Joe</span><MessageCircle size={15} /></button>
         </div>
       </nav>
+
+      {assistantOpen && <div className="fixed inset-0 z-[60] flex items-end justify-end bg-black/45 p-4 sm:items-center sm:p-8" role="dialog" aria-modal="true" aria-labelledby="ask-joe-title"><div className="w-full max-w-md rounded-2xl border border-[#b7f34b]/30 bg-[#0a161d] p-5 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#b7f34b]">Portfolio RAG agent</p><h2 id="ask-joe-title" className="mt-2 text-xl font-semibold">Ask Joe</h2><p className="mt-1 text-sm text-white/45">Answers are grounded in information shown on this portfolio.</p></div><button type="button" aria-label="Close Ask Joe" onClick={() => setAssistantOpen(false)} className="rounded-full p-2 text-white/50 transition hover:bg-white/10 hover:text-white"><X size={17} /></button></div><div className="mt-6 min-h-24 rounded-xl border border-white/10 bg-white/[0.035] p-4 text-sm leading-6 text-white/70">{asking ? 'Searching Joe\'s portfolio…' : answer || 'Ask about projects, experience, credentials, or contact details.'}</div><form onSubmit={askJoe} className="mt-4 flex items-center gap-2"><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="e.g. What is Chess3D?" aria-label="Ask a question" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#b7f34b]/60" /><button type="submit" aria-label="Send question" disabled={asking || !question.trim()} className="rounded-xl bg-[#b7f34b] p-3 text-[#071018] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"><Send size={16} /></button></form></div></div>}
 
       <main id="top">
         <section className="relative mx-auto flex min-h-[90vh] max-w-6xl items-center px-5 pb-20 pt-36 lg:px-8">
