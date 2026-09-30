@@ -2,6 +2,8 @@ export type PortfolioChunk = { id: string; section: 'profile' | 'projects' | 'ex
 
 export const portfolioChunks: PortfolioChunk[] = [
   { id: 'profile', section: 'profile', title: 'Profile', content: 'Joseph Macibi is a Senior Backend and AI Engineer based in Nairobi, Kenya. He designs production-grade Java and Spring Boot microservices and works with RAG architectures, NLP, and neural networks for fintech platforms. The portfolio says he has 4+ years building and an AI fintech focus.', keywords: ['joseph','joe','macibi','senior','backend','ai','engineer','nairobi','java','spring','boot','rag','nlp','neural','fintech','years'] },
+  { id: 'project-mini-wakili', section: 'projects', title: 'Mini Wakili', content: 'Mini Wakili (repository: mini_wakili.py) is a modular Python scaffold for a grounded legal research agent. It separates orchestration, retrieval, legal-AI safety, document chunking, citations, and human-in-the-loop controls. Its local Kenyan citation corpus contains 20+ curated law, regulatory, and clearly labeled synthetic internal-policy materials. It is decision-support infrastructure, not legal advice, and materials should be verified against current official sources.', keywords: ['mini','wakili','mini_wakili.py','python','rag','grounded','legal','research','agent','orchestration','retrieval','chunking','citations','safety','human','loop','kenya','corpus','legal advice'] },
+  { id: 'project-kiotapay', section: 'projects', title: 'KiotaPay streaming app', content: 'KiotaPay streaming app (repository: kiotapay-streaming-pdf-s3-upload) is one Spring Boot application using Java 25. It streams invoice PDFs generated with OpenPDF through a PipedOutputStream into multipart S3 uploads, using RabbitMQ for asynchronous jobs, MinIO for local object storage, bounded concurrency, retries, backpressure, and authenticated upload endpoints. The design keeps only the current upload part in memory rather than materializing the complete file.', keywords: ['kiotapay','streaming','pdf','s3','upload','java','25','spring','boot','openpdf','pipedoutputstream','multipart','rabbitmq','minio','invoice','bounded','concurrency','retry','backpressure','async','asynchronous'] },
   { id: 'project-infrarecord', section: 'projects', title: 'InfraRecord', content: 'InfraRecord is an infrastructure observability and governance platform for hybrid cloud environments. It uses TypeScript, Kafka, and AI optimization to create audit trails, ingest live metrics, and surface AI-driven resource optimization.', keywords: ['infrarecord','infrastructure','observability','governance','hybrid','cloud','typescript','kafka','audit','metrics','optimization'] },
   { id: 'project-chess3d', section: 'projects', title: 'Chess3D', content: 'Chess3D is an interactive browser chess game with custom Blender models and a Web Worker game AI. It uses TypeScript, Three.js, and Webpack, bringing a responsive 3D chess experience to the browser without blocking the main thread.', keywords: ['chess3d','chess','blender','web','worker','game','ai','typescript','three','three.js','webpack','3d','browser'] },
   { id: 'project-nyumbasmart', section: 'projects', title: 'NyumbaSmart', content: 'NyumbaSmart is an AI-powered apartment and facility management platform for African real estate operations. It includes tenant portals, rent payments, maintenance automation, analytics, and AI insights. Its listed technologies are AI, M-Pesa, and property operations.', keywords: ['nyumbasmart','apartment','facility','management','real','estate','tenant','rent','payments','maintenance','analytics','m-pesa','property'] },
@@ -21,7 +23,14 @@ export const portfolioChunks: PortfolioChunk[] = [
 ]
 
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-const queryStopWords = new Set(['about', 'and', 'are', 'can', 'does', 'how', 'is', 'joe', 'joseph', 'me', 'of', 'on', 'tell', 'the', 'what', 'which', 'who', 'with'])
+const queryStopWords = new Set(['about', 'answer', 'are', 'can', 'does', 'how', 'is', 'joe', 'joseph', 'me', 'of', 'on', 'tell', 'the', 'what', 'which', 'who', 'with'])
+const queryAliases: Record<string, string[]> = {
+  mini: ['mini-wakili', 'mini_wakili.py'],
+  wakili: ['mini-wakili', 'mini_wakili.py'],
+  kiota: ['kiotapay', 'kiota pay'],
+  pay: ['kiotapay', 'payment'],
+  rag: ['retrieval augmented generation', 'grounded'],
+}
 
 export function retrievePortfolioChunks(question: string) {
   const normalizedQuestion = normalize(question)
@@ -29,7 +38,10 @@ export function retrievePortfolioChunks(question: string) {
   return portfolioChunks.map((chunk) => {
     const haystack = normalize(`${chunk.title} ${chunk.content} ${chunk.keywords.join(' ')}`)
     const exactPhrase = normalizedQuestion && haystack.includes(normalizedQuestion) ? 8 : 0
-    const score = terms.reduce((total, term) => total + (haystack.includes(term) ? 1 : 0), exactPhrase)
+    const score = terms.reduce((total, term) => {
+      const aliases = queryAliases[term] ?? []
+      return total + (haystack.includes(term) ? 1 : 0) + aliases.reduce((aliasScore, alias) => aliasScore + (haystack.includes(normalize(alias)) ? 1 : 0), 0)
+    }, exactPhrase)
     return { chunk, score }
   }).filter(({ score }) => score > 0).sort((a, b) => b.score - a.score).slice(0, 6).map(({ chunk }) => chunk)
 }
