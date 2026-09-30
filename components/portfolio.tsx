@@ -52,6 +52,7 @@ const experience = [
   { date: 'Nov 2024 — Present', role: 'AI & Robotics Tutor', company: 'Deutsche Schule Nairobi', icon: Sparkles, copy: 'Deliver technical training on algorithm design, robotics, and introductory AI through hands-on learning.' },
   { date: 'June 2022 — March 2023', role: 'Software Engineer', company: 'Pesapal Limited', icon: Network, copy: 'Built REST API payment integrations and optimized database telemetry across PostgreSQL and MySQL.' },
   { date: 'Jan 2020 — May 2020', role: 'Network Associate', company: 'Catholic University of East Africa', icon: ShieldCheck, copy: 'Monitored network device performance, maintained platform uptime, and resolved connectivity incidents supporting remote learning infrastructure.' },
+  { date: 'Governance & compliance', role: 'Governance and Compliance Projects', company: 'Backed by Strathmore certification', icon: ShieldCheck, copy: 'Worked on Data Mapping & Anonymization, an Automated Regulatory Reporting dashboard, and an open source startup compliance guide.' },
 ]
 
 function Reveal({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
